@@ -9,15 +9,16 @@ import { authenticate } from '@google-cloud/local-auth';
 import { google } from 'googleapis';
 
 // ? UserMade Modules
-import { loadJson, saveJson } from '../base/index.js';
-
+import { loadJson, saveJson } from 'jnu-abc';
 
 // & Variable AREA
 // &---------------------------------------------------------------------------
 
 // scopeDir: Apis/google/spec
-const getScopes = ({user = 'bigwhitekmc', sn = 0, scopeDir = ''} = {}) => {
-  return scopeDir ? loadJson(`${scopeDir}/scopes_${user}_${sn}.json`)?? loadJson(`${scopeDir}/scopes_default.json`) : {};
+const getScopes = ({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}) => {
+  return scopeDir
+    ? loadJson(`${scopeDir}/scopes_${user}_${sn}.json`) ?? loadJson(`${scopeDir}/scopes_default.json`)
+    : {};
 };
 
 // & Class AREA
@@ -31,8 +32,8 @@ export class GoogleAuth {
   // & CONSTRUCTOR
   // apiKey(Google API Key) | oauth2(Google OAuth 2.0 Client ID) | serviceAccount(Google Service Account)
   // <type>_<user>_<sn>.json   oauth2: gsa_mooninlearn_0
-  constructor({user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = '', authDir = ''} = {}) {
-    this.scopes = getScopes({user, sn, scopeDir});
+  constructor({ user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = '', authDir = '' } = {}) {
+    this.scopes = getScopes({ user, sn, scopeDir });
     switch (type) {
       case 'oauth2':
         this.tokenPath = `${authDir}/token_${user}_${sn}.json`;
@@ -80,9 +81,7 @@ export class GoogleAuth {
     let client: any = await this.loadSavedCredentialsIfExist();
     if (client) {
       // Check if the token is expired
-      const isExpired =
-        client.credentials.expiry_date &&
-        Date.now() >= client.credentials.expiry_date;
+      const isExpired = client.credentials.expiry_date && Date.now() >= client.credentials.expiry_date;
       if (isExpired) {
         console.log('Token has expired, refreshing...');
         client = await this.refreshAccessToken(client);

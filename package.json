@@ -42,7 +42,10 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "dotenv": "^16.4.7"
+    "@google-cloud/local-auth": "^3.0.1",
+    "dotenv": "^16.4.7",
+    "googleapis": "^144.0.0",
+    "jnu-abc": "^0.0.3"
   },
   "type": "module"
 }

@@ -2,29 +2,33 @@
 // ? Builtin Modules
 
 // ? External Modules
-import { google } from "googleapis";
+import { google } from 'googleapis';
 
 // ? UserMade Modules
 // ? Local Modules
-import { GoogleAuth } from "./googleAuth.js";
+import { GoogleAuth } from './googleAuth.js';
 
 // & Function AREA
 // &---------------------------------------------------------------------------
 // Constants for snippet keys
-const snippetKeys: string[] = ["channelId", "publishedAt", "title", "description", "thumbnail"];
+const snippetKeys: string[] = ['channelId', 'publishedAt', 'title', 'description', 'thumbnail'];
 
 // Function to flatten snippet object
-function flattenSnippet(snippet: Record<string, any> = {}, keys = snippetKeys, thumbnail = "high"): Record<string, any> {
+function flattenSnippet(
+  snippet: Record<string, any> = {},
+  keys = snippetKeys,
+  thumbnail = 'high'
+): Record<string, any> {
   const dct: Record<string, any> = {};
   for (const key of keys) {
-    if (key === "thumbnail") {
+    if (key === 'thumbnail') {
       try {
-        dct[key] = `=image("${snippet["thumbnails"][thumbnail]["url"]}")`;
+        dct[key] = `=image("${snippet['thumbnails'][thumbnail]['url']}")`;
       } catch {
-        dct[key] = "";
+        dct[key] = '';
       }
-    } else if (key.endsWith("_ko")) {
-      dct[key.slice(0, -2)] = snippet["localized"][key.split("_")[0]];
+    } else if (key.endsWith('_ko')) {
+      dct[key.slice(0, -2)] = snippet['localized'][key.split('_')[0]];
     } else {
       dct[key] = snippet[key];
     }
@@ -39,21 +43,21 @@ export class Youtube {
   // * CONSTRUCTOR
   /** GoogleAuth 참조(googleAuth.ts)
    */
-  constructor({user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = '', authDir = ''} = {}) {
-    this.googleAuth = new GoogleAuth({user, type, sn, scopeDir, authDir});
+  constructor({ user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = '', authDir = '' } = {}) {
+    this.googleAuth = new GoogleAuth({ user, type, sn, scopeDir, authDir });
   }
 
   /** init
    */
   async init() {
     const auth = await this.googleAuth.authorize();
-    this.service = google.youtube({ version: "v3", auth });
+    this.service = google.youtube({ version: 'v3', auth });
   }
 
   async search(options: { q?: string; order?: string; part?: string[]; maxResults?: number } = {}): Promise<any> {
-    const q = options.q || "gemini";
-    const order = options.order || "relevance";
-    const part = options.part || "snippet".split(",");
+    const q = options.q || 'gemini';
+    const order = options.order || 'relevance';
+    const part = options.part || 'snippet'.split(',');
     const maxResults = options.maxResults || 100;
 
     const response = await this.service.search.list({
@@ -67,9 +71,9 @@ export class Youtube {
   }
 
   async channelIdByCustomUrl(customUrl: string): Promise<string> {
-    customUrl = customUrl.startsWith("@") ? customUrl.substring(1) : customUrl;
+    customUrl = customUrl.startsWith('@') ? customUrl.substring(1) : customUrl;
     const s: any[] = await this.search({ q: customUrl });
-    return s[0]["id"]["channelId"];
+    return s[0]['id']['channelId'];
   }
 
   async subscriptions_(): Promise<any[]> {
@@ -78,7 +82,7 @@ export class Youtube {
 
     do {
       const response = await this.service.subscriptions.list({
-        part: "id,snippet".split(","),
+        part: 'id,snippet'.split(','),
         mine: true,
         maxResults: 50,
         pageToken: nextPageToken || undefined, // null이면 undefined로 전달
@@ -95,8 +99,8 @@ export class Youtube {
     const items = await this.subscriptions_();
     const dicts: any[] = [];
     for (const item of items) {
-      const dct = { id: item["id"] };
-      Object.assign(dct, flattenSnippet(item["snippet"]));
+      const dct = { id: item['id'] };
+      Object.assign(dct, flattenSnippet(item['snippet']));
       dicts.push(dct);
     }
     return dicts;
@@ -129,8 +133,8 @@ export class Youtube {
 
   async channelInfo_(channelId: string): Promise<any[]> {
     const response = await this.service.channels.list({
-      part: "snippet,contentDetails".split(","),
-      id: channelId.split(","),
+      part: 'snippet,contentDetails'.split(','),
+      id: channelId.split(','),
       maxResults: 25,
     });
 
@@ -142,19 +146,22 @@ export class Youtube {
     return items;
   }
 
-  async channelInfo(channelId: string, thumbnail = "high"): Promise<any> {
+  async channelInfo(channelId: string, thumbnail = 'high'): Promise<any> {
     const infos = await this.channelInfo_(channelId);
     const info = infos[0];
-    const related = info["contentDetails"]["relatedPlaylists"];
+    const related = info['contentDetails']['relatedPlaylists'];
 
-    const dct = { channelId, likes: "", uploads: "" };
-    Object.assign(dct, flattenSnippet(info["snippet"], ["customUrl", ...snippetKeys.slice(1), "title_ko", "description_ko"], thumbnail));
-    dct["likes"] = related["likes"];
-    dct["uploads"] = related["uploads"];
+    const dct = { channelId, likes: '', uploads: '' };
+    Object.assign(
+      dct,
+      flattenSnippet(info['snippet'], ['customUrl', ...snippetKeys.slice(1), 'title_ko', 'description_ko'], thumbnail)
+    );
+    dct['likes'] = related['likes'];
+    dct['uploads'] = related['uploads'];
     return dct;
   }
 
-  async channelInfoByCustomUrl(customUrl: string, thumbnail = "high"): Promise<any> {
+  async channelInfoByCustomUrl(customUrl: string, thumbnail = 'high'): Promise<any> {
     return this.channelInfo(await this.channelIdByCustomUrl(customUrl), thumbnail);
   }
 
@@ -164,7 +171,7 @@ export class Youtube {
 
     do {
       const response = await this.service.playlists.list({
-        part: "snippet,contentDetails".split(","),
+        part: 'snippet,contentDetails'.split(','),
         channelId,
         maxResults: 50,
         pageToken: nextPageToken || undefined, // null이면 undefined로 전달
@@ -177,12 +184,15 @@ export class Youtube {
     return playlists;
   }
 
-  async channelPlaylists(channelId: string, thumbnail = "high"): Promise<any[]> {
+  async channelPlaylists(channelId: string, thumbnail = 'high'): Promise<any[]> {
     const dicts: any[] = [];
     for (const item of await this.channelPlaylists_(channelId)) {
-      const dct = { playlistId: item["id"], itemCount: 0 };
-      Object.assign(dct, flattenSnippet(item["snippet"], snippetKeys.concat(["title_ko", "description_ko"]), thumbnail));
-      dct["itemCount"] = item["contentDetails"]["itemCount"];
+      const dct = { playlistId: item['id'], itemCount: 0 };
+      Object.assign(
+        dct,
+        flattenSnippet(item['snippet'], snippetKeys.concat(['title_ko', 'description_ko']), thumbnail)
+      );
+      dct['itemCount'] = item['contentDetails']['itemCount'];
       dicts.push(dct);
     }
     return dicts;
@@ -198,7 +208,7 @@ export class Youtube {
 
     do {
       let response = await this.service.playlistItems.list({
-        part: "snippet,contentDetails".split(","),
+        part: 'snippet,contentDetails'.split(','),
         playlistId,
         maxResults: 50, // API maximum limit
         pageToken: nextPageToken || undefined, // null이면 undefined로 전달
@@ -211,11 +221,11 @@ export class Youtube {
     return videos;
   }
 
-  async videosByPlaylist(playlistId: string, thumbnail = "high"): Promise<any[]> {
+  async videosByPlaylist(playlistId: string, thumbnail = 'high'): Promise<any[]> {
     const dicts: any[] = [];
     for (const item of await this.videosByPlaylist_(playlistId)) {
-      const dct = { videoId: item["contentDetails"]["videoId"] };
-      Object.assign(dct, flattenSnippet(item["snippet"], snippetKeys, thumbnail));
+      const dct = { videoId: item['contentDetails']['videoId'] };
+      Object.assign(dct, flattenSnippet(item['snippet'], snippetKeys, thumbnail));
       dicts.push(dct);
     }
     return dicts;
@@ -227,7 +237,7 @@ export class Youtube {
 
     do {
       const response = await this.service.playlists.list({
-        part: "snippet,contentDetails".split(","),
+        part: 'snippet,contentDetails'.split(','),
         mine: true,
         maxResults: 50,
         pageToken: nextPageToken || undefined,
@@ -240,12 +250,15 @@ export class Youtube {
     return playlists;
   }
 
-  async myPlaylists(thumbnail = "high"): Promise<any[]> {
+  async myPlaylists(thumbnail = 'high'): Promise<any[]> {
     const dicts: any[] = [];
     for (const item of await this.myPlaylists_()) {
-      const dct = { playlistId: item["id"], itemCount: 0 };
-      Object.assign(dct, flattenSnippet(item["snippet"], snippetKeys.concat(["title_ko", "description_ko"]), thumbnail));
-      dct["itemCount"] = item["contentDetails"]["itemCount"];
+      const dct = { playlistId: item['id'], itemCount: 0 };
+      Object.assign(
+        dct,
+        flattenSnippet(item['snippet'], snippetKeys.concat(['title_ko', 'description_ko']), thumbnail)
+      );
+      dct['itemCount'] = item['contentDetails']['itemCount'];
       dicts.push(dct);
     }
     return dicts;
@@ -254,7 +267,7 @@ export class Youtube {
   async getWatchLaterPlaylistId(): Promise<string | null> {
     try {
       const response = await this.service.channels.list({
-        part: "contentDetails",
+        part: 'contentDetails',
         mine: true,
       });
 
@@ -287,20 +300,20 @@ export class Youtube {
   async getMyChannelId(): Promise<string | null> {
     try {
       const response = await this.service.channels.list({
-        part: "id,snippet".split(","),
+        part: 'id,snippet'.split(','),
         mine: true,
       });
 
       if (response.data.items && response.data.items.length > 0) {
         const channelId = response.data.items[0].id;
-        console.log("Your channel ID is:", channelId);
+        console.log('Your channel ID is:', channelId);
         return channelId;
       } else {
-        console.log("No channel found.");
+        console.log('No channel found.');
         return null;
       }
     } catch (error) {
-      console.error("Error fetching channel ID:", error);
+      console.error('Error fetching channel ID:', error);
       return null;
     }
   }
@@ -313,11 +326,11 @@ export class Youtube {
     });
 
     return response.data.items[0].contentDetails.relatedPlaylists;
-  };
+  }
 
   // "LL": 좋아요 표시한 동영상 가져오기
   async myPlaylistItems(playlistId = 'LL') {
-    const playlistItems = [];
+    const playlistItems: any[] = [];
     let nextPageToken;
 
     do {
@@ -333,5 +346,5 @@ export class Youtube {
     } while (nextPageToken);
 
     return playlistItems;
-  };
+  }
 }
