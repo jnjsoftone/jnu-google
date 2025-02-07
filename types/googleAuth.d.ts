@@ -1,3 +1,4 @@
+import { OAuth2Client } from 'google-auth-library';
 export declare class GoogleAuth {
     tokenPath: string;
     crendentialsPath: string;
@@ -14,18 +15,17 @@ export declare class GoogleAuth {
      *
      * @return {Promise<OAuth2Client|null>}
      */
-    loadSavedCredentialsIfExist(): Promise<import("google-auth-library/build/src/auth/googleauth").JSONClient | null>;
+    loadSavedCredentialsIfExist(): Promise<OAuth2Client | null>;
     /**
-     * Serializes credentials to a file comptible with GoogleAUth.fromJSON.
+     * Serializes credentials to a file compatible with GoogleAuth.fromJSON.
      *
      * @param {OAuth2Client} client
      * @return {Promise<void>}
      */
-    saveCredentials(client: any): Promise<void>;
+    saveCredentials(client: OAuth2Client): Promise<void>;
     /**
-     * Load or request or authorization to call APIs.
+     * Load or request authorization to call APIs.
      */
-    authorize(): Promise<any>;
-    refreshAccessToken(client: any): Promise<any>;
+    authorize(): Promise<OAuth2Client>;
 }
 //# sourceMappingURL=googleAuth.d.ts.map
