@@ -218,3 +218,62 @@ const auth = await new GoogleAuth({
 // 인증 진행
 const client = await auth.authorize();
 ```
+
+
+---
+
+```prompt
+supabase에서 save할 때 에러가 있네요.
+```
+
+네, Supabase의 Row Level Security (RLS) 정책 때문에 발생하는 오류입니다. Storage 버킷에 대한 접근 권한을 설정해야 합니다.
+
+Supabase 대시보드에서 다음과 같이 설정하면 됩니다:
+
+1. Storage 버킷 생성 및 정책 설정:
+
+````sql
+-- 1. Storage 버킷 생성 (이미 생성되어 있다면 생략)
+insert into storage.buckets (id, name)
+values ('google-auth', 'google-auth');
+
+-- 2. 모든 사용자에게 읽기 권한 부여
+create policy "Public Access"
+on storage.objects for select
+to anon
+using ( bucket_id = 'google-auth' );
+
+-- 3. 인증된 사용자에게 쓰기 권한 부여
+create policy "Allow Inserts"
+on storage.objects for insert
+to anon
+with check ( bucket_id = 'google-auth' );
+
+-- 4. 인증된 사용자에게 업데이트 권한 부여
+create policy "Allow Updates"
+on storage.objects for update
+to anon
+using ( bucket_id = 'google-auth' );
+
+-- 5. 인증된 사용자에게 삭제 권한 부여
+create policy "Allow Deletes"
+on storage.objects for delete
+to anon
+using ( bucket_id = 'google-auth' );
+````
+
+또는 Supabase 대시보드에서 UI를 통해 설정할 수 있습니다:
+
+1. Storage > New Bucket으로 이동
+2. 'google-auth' 버킷 생성 (이미 생성되어 있다면 생략)
+3. 생성된 버킷 선택
+4. "Policies" 탭 선택
+5. "New Policy" 클릭
+6. "Create a policy from scratch" 선택
+7. 다음과 같이 설정:
+   - Policy name: "Public Access"
+   - Allowed operations: SELECT, INSERT, UPDATE, DELETE
+   - Target roles: anon, authenticated
+   - Using expression: `bucket_id = 'google-auth'`
+
+이렇게 설정하면 RLS 오류가 해결될 것입니다. 보안상 필요하다면 정책을 더 제한적으로 설정할 수 있습니다.

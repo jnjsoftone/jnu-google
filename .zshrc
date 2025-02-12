@@ -1,0 +1,3 @@
+# Supabase 환경변수
+export SUPABASE_URL="https://udunkjbjruoiwexfvdup.supabase.co"
+export SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkdW5ramJqcnVvaXdleGZ2ZHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzNjE2MzgsImV4cCI6MjA1NDkzNzYzOH0._fD3YEofMAE2xMskaF2zqhN3NaoM-GMYuJrlv6Q-Q54" 

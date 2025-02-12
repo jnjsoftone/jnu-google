@@ -5,6 +5,7 @@
 ### macos / linux
 ```ini:~/.zshrc
 export DEV_ROOT="/Users/moon/JnJ/Developments"
+Public Access
 ```
 
 ### windows
