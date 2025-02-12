@@ -1,3 +1,18 @@
+```prompt
+scope, token에 대한 json 파일을 로컬 파일이 아닌, supabase storage에서 읽고 쓰는 것을 공유하려면 어떻게 하나요?
+```
+
+supabase storage를 사용하도록 GoogleAuth 클래스를 수정하는 방법을 설명해드리겠습니다.
+
+먼저 필요한 변경사항을 설명하겠습니다:
+
+1. supabase 클라이언트를 추가하고 초기화해야 합니다
+2. 파일 읽기/쓰기 함수를 supabase storage 버전으로 수정해야 합니다
+3. getScopes와 GoogleAuth 클래스의 메서드들을 비동기 처리하도록 수정해야 합니다
+
+다음과 같이 코드를 수정하시면 됩니다:
+
+```typescript:src/googleAuth.ts
 import { authenticate } from '@google-cloud/local-auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
@@ -92,60 +107,7 @@ export class GoogleAuth {
 
       console.log('Loading OAuth2 keys from:', this.crendentialsPath);
       const keys = await loadJsonFromStorage(this.crendentialsPath);
-      const key = keys.installed || keys.web;
-      console.log('OAuth2 key loaded:', key ? '(exists)' : '(not found)');
-
-      if (!key || !key.client_id || !key.client_secret) {
-        console.log('Invalid OAuth2 keys');
-        return null;
-      }
-      
-      const client = new OAuth2Client({
-        clientId: key.client_id,
-        clientSecret: key.client_secret,
-        redirectUri: key.redirect_uris[0]
-      });
-
-      // 토큰 정보를 명시적으로 설정
-      const token = {
-        access_token: credentials.access_token,
-        refresh_token: credentials.refresh_token,
-        scope: this.scopes.join(' '),
-        token_type: credentials.token_type || 'Bearer',
-        expiry_date: credentials.expiry_date
-      };
-
-      console.log('Setting credentials with token:', { 
-        hasAccessToken: !!token.access_token,
-        hasRefreshToken: !!token.refresh_token,
-        scope: token.scope,
-        tokenType: token.token_type,
-        expiryDate: token.expiry_date ? new Date(token.expiry_date).toISOString() : 'not set'
-      });
-
-      client.setCredentials(token);
-
-      // 토큰이 만료되었거나 곧 만료될 예정이면 자동으로 갱신
-      const expiryDate = token.expiry_date;
-      const isExpired = expiryDate ? Date.now() >= expiryDate - 30000 : true;
-      
-      if (isExpired && token.refresh_token) {
-        console.log('Token is expired or about to expire, refreshing...');
-        try {
-          const { credentials: newCredentials } = await client.refreshAccessToken();
-          client.setCredentials(newCredentials);
-          await this.saveCredentials(client);
-          console.log('Token refreshed successfully');
-        } catch (refreshError) {
-          console.error('Error refreshing token:', refreshError);
-          if (!credentials.refresh_token) {
-            console.log('No refresh token available, authentication required');
-            return null;
-          }
-        }
-      }
-
-      return client;
+      // ... 나머지 코드는 동일 ...
     } catch (err) {
       console.error('Error loading credentials:', err);
       return null;
@@ -186,25 +148,73 @@ export class GoogleAuth {
     }
   }
 
-  async authorize() {
-    console.log('Starting authorization process...');
-    let client = await this.loadSavedCredentialsIfExist();
-    
-    if (client) {
-      return client;
-    }
-
-    console.log('No valid credentials found, starting new authentication...');
-    // 새로운 인증 진행
-    client = await authenticate({
-      scopes: this.scopes,
-      keyfilePath: this.crendentialsPath,
-    });
-
-    if (client.credentials) {
-      console.log('New authentication successful, saving credentials...');
-      await this.saveCredentials(client);
-    }
-    return client;
-  }
+  // authorize 메서드는 변경 없음
 }
+```
+
+주요 변경사항:
+
+1. Supabase 클라이언트를 초기화하고 스토리지 관련 함수들을 추가했습니다.
+2. `loadJsonFromStorage`와 `saveJsonToStorage` 함수를 만들어 Supabase 스토리지와 통신하도록 했습니다.
+3. `getScopes` 함수를 비동기(async) 함수로 변경했습니다.
+4. GoogleAuth 클래스에 `init` 메서드를 추가하여 비동기 초기화를 지원하도록 했습니다.
+
+사용 예시:
+
+```typescript
+const auth = await new GoogleAuth({
+  user: 'user1',
+  type: 'oauth2',
+  sn: 0,
+  scopeDir: 'scopes',
+  authDir: 'auth'
+}).init();
+
+const client = await auth.authorize();
+```
+
+주의사항:
+1. Supabase 프로젝트 URL과 anon key를 환경변수로 설정해야 합니다.
+2. Supabase 스토리지에 'google-auth' 버킷을 생성해야 합니다.
+3. 적절한 스토리지 권한을 설정해야 합니다.
+
+
+---
+
+```prompt
+npm install은?
+```
+
+
+Supabase 클라이언트를 사용하기 위해 필요한 패키지를 설치해야 합니다. 다음 명령어를 실행해주세요:
+
+```bash
+npm install @supabase/supabase-js
+```
+
+추가로 환경변수 설정을 위해 `.env` 파일에 다음 내용을 추가해야 합니다:
+
+```env:.env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+Supabase 프로젝트 설정에서:
+1. Project Settings > API 에서 Project URL과 anon public key를 찾을 수 있습니다
+2. Storage에서 'google-auth' 버킷을 생성해야 합니다
+3. Storage > Policies에서 적절한 접근 권한을 설정해야 합니다
+
+사용 예시:
+```typescript
+// GoogleAuth 인스턴스 생성 및 초기화
+const auth = await new GoogleAuth({
+  user: 'user1',
+  type: 'oauth2',
+  sn: 0,
+  scopeDir: 'scopes',
+  authDir: 'auth'
+}).init();
+
+// 인증 진행
+const client = await auth.authorize();
+```
