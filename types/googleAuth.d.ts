@@ -10,11 +10,6 @@ export declare class GoogleAuth {
         scopeDir?: string | undefined;
         authDir?: string | undefined;
     });
-    init({ user, sn, scopeDir }?: {
-        user?: string | undefined;
-        sn?: number | undefined;
-        scopeDir?: string | undefined;
-    }): Promise<this>;
     loadSavedCredentialsIfExist(): Promise<OAuth2Client | null>;
     saveCredentials(client: OAuth2Client): Promise<void>;
     authorize(): Promise<OAuth2Client>;

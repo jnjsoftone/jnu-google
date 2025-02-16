@@ -5,16 +5,16 @@ import dotenv from 'dotenv';
 
 // const { GOOGLE_SCOPE_DIR, GOOGLE_AUTH_DIR } = process.env;
 
-const GOOGLE_SCOPE_DIR = "/Users/moon/JnJ/Developments/jd-environments/Apis/google/spec";
-const GOOGLE_AUTH_DIR = "/Users/moon/JnJ/Developments/jd-environments/Apis/google";
+// const GOOGLE_SCOPE_DIR = "/Users/moon/JnJ/Developments/jd-environments/Apis/google/spec";
+// const GOOGLE_AUTH_DIR = "/Users/moon/JnJ/Developments/jd-environments/Apis/google";
 
 const spreadsheetId = '13Y3q2mYpGRIIjD2oJZu5YvLIXkQB0jDaHDICNnLqLgE';
 // const googleSheets = new GoogleSheets(spreadsheetId, {user: 'bigwhitekmc', type: 'oauth2', scopeDir: GOOGLE_SCOPE_DIR, authDir: GOOGLE_AUTH_DIR});
 const googleSheets = new GoogleSheets(spreadsheetId, {
   user: 'bigwhitekmc',
   type: 'oauth2',
-  scopeDir: GOOGLE_SCOPE_DIR,
-  authDir: GOOGLE_AUTH_DIR,
+  scopeDir: '',
+  authDir: '',
 });
 
 // oauth2_bigwhitekmc_0.json

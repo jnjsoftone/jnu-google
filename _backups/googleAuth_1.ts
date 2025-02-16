@@ -1,12 +1,56 @@
 import { authenticate } from '@google-cloud/local-auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { loadJson, saveJson } from 'jnu-abc';
+import { createClient } from '@supabase/supabase-js';
 
-// scopeDir: Apis/google/spec
-const getScopes = ({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}) => {
+// Supabase 클라이언트 초기화
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+);
+
+// Storage에서 JSON 파일 읽기 함수
+const loadJsonFromStorage = async (path: string) => {
+  try {
+    const { data, error } = await supabase.storage
+      .from('google-auth')
+      .download(path);
+    
+    if (error) {
+      console.error('Storage read error:', error);
+      return null;
+    }
+
+    const text = await data.text();
+    return JSON.parse(text);
+  } catch (err) {
+    console.error('Error loading from storage:', err);
+    return null;
+  }
+};
+
+// Storage에 JSON 파일 저장 함수
+const saveJsonToStorage = async (path: string, data: any) => {
+  try {
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const { error } = await supabase.storage
+      .from('google-auth')
+      .upload(path, blob, { upsert: true });
+
+    if (error) {
+      throw error;
+    }
+  } catch (err) {
+    console.error('Error saving to storage:', err);
+    throw err;
+  }
+};
+
+// getScopes를 비동기 함수로 수정
+const getScopes = async ({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}) => {
   const scopes = scopeDir
-    ? loadJson(`${scopeDir}/scopes_${user}_${sn}.json`) ?? loadJson(`${scopeDir}/scopes_default.json`)
+    ? await loadJsonFromStorage(`${scopeDir}scopes_${user}_${sn}.json`) ?? 
+      await loadJsonFromStorage(`${scopeDir}scopes_default.json`)
     : {};
   console.log('Loaded scopes:', scopes);
   return scopes;
@@ -19,28 +63,34 @@ export class GoogleAuth {
 
   constructor({ user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = '', authDir = '' } = {}) {
     console.log('Initializing GoogleAuth with:', { user, type, sn, scopeDir, authDir });
-    this.scopes = getScopes({ user, sn, scopeDir });
+    this.scopes = [];
     switch (type) {
       case 'oauth2':
-        this.tokenPath = `${authDir}/token_${user}_${sn}.json`;
-        this.crendentialsPath = `${authDir}/${type}_${user}_${sn}.json`;
+        this.tokenPath = `${authDir}token_${user}_${sn}.json`.replace(/^\//, '');
+        this.crendentialsPath = `${authDir}${type}_${user}_${sn}.json`.replace(/^\//, '');
     }
     console.log('Paths:', { tokenPath: this.tokenPath, credentialsPath: this.crendentialsPath });
+  }
+
+  // 초기화를 위한 별도 메서드
+  async init({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}) {
+    this.scopes = await getScopes({ user, sn, scopeDir });
+    return this;
   }
 
   async loadSavedCredentialsIfExist() {
     try {
       console.log('Loading credentials from:', this.tokenPath);
-      const credentials = loadJson(this.tokenPath);
+      const credentials = await loadJsonFromStorage(this.tokenPath);
       console.log('Loaded credentials:', credentials ? '(exists)' : '(not found)');
       
-      if (!credentials || !credentials.refresh_token) {
-        console.log('No valid credentials found');
+      if (!credentials) {
+        console.log('No credentials found');
         return null;
       }
 
       console.log('Loading OAuth2 keys from:', this.crendentialsPath);
-      const keys = loadJson(this.crendentialsPath);
+      const keys = await loadJsonFromStorage(this.crendentialsPath);
       const key = keys.installed || keys.web;
       console.log('OAuth2 key loaded:', key ? '(exists)' : '(not found)');
 
@@ -78,18 +128,19 @@ export class GoogleAuth {
       const expiryDate = token.expiry_date;
       const isExpired = expiryDate ? Date.now() >= expiryDate - 30000 : true;
       
-      if (isExpired || !token.access_token) {
-        console.log('Token is expired or missing access token, refreshing...');
+      if (isExpired && token.refresh_token) {
+        console.log('Token is expired or about to expire, refreshing...');
         try {
           const { credentials: newCredentials } = await client.refreshAccessToken();
           client.setCredentials(newCredentials);
           await this.saveCredentials(client);
           console.log('Token refreshed successfully');
-          return client;
         } catch (refreshError) {
           console.error('Error refreshing token:', refreshError);
-          console.log('Authentication required');
-          return null;
+          if (!credentials.refresh_token) {
+            console.log('No refresh token available, authentication required');
+            return null;
+          }
         }
       }
 
@@ -103,8 +154,16 @@ export class GoogleAuth {
   async saveCredentials(client: OAuth2Client) {
     try {
       console.log('Saving credentials...');
-      const keys = loadJson(this.crendentialsPath);
+      const keys = await loadJsonFromStorage(this.crendentialsPath);
       const key = keys.installed || keys.web;
+      
+      if (!client.credentials.refresh_token) {
+        console.log('No refresh token in credentials, keeping existing one');
+        const existingCredentials = await loadJsonFromStorage(this.tokenPath);
+        if (existingCredentials?.refresh_token) {
+          client.credentials.refresh_token = existingCredentials.refresh_token;
+        }
+      }
       
       const payload = {
         type: 'authorized_user',
@@ -118,7 +177,7 @@ export class GoogleAuth {
       };
       
       console.log('Saving credentials to:', this.tokenPath);
-      saveJson(this.tokenPath, payload);
+      await saveJsonToStorage(this.tokenPath, payload);
       console.log('Credentials saved successfully');
     } catch (err) {
       console.error('Error saving credentials:', err);
