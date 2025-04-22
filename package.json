@@ -46,7 +46,7 @@
     "dotenv": "^16.4.7",
     "googleapis": "^144.0.0",
     "jnu-abc": "^0.0.3",
-    "jnu-cloud": "^0.0.9"
+    "jnu-cloud": "^0.0.10"
   },
   "optionalDependencies": {
     "@swc/core-darwin-arm64": "^1.3.99",

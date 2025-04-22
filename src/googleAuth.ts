@@ -15,7 +15,7 @@ const githubConfig = {
 };
 
 // Storage에서 JSON 파일 읽기 함수
-const loadJsonFromStorage = async (path: string) => {
+const loadJsonFromStorage = async (path: string): Promise<any> => {
   return loadJsonFromGithub(path, githubConfig)
 };
 
@@ -59,7 +59,7 @@ export class GoogleAuth {
   async loadSavedCredentialsIfExist() {
     try {
       console.log('Loading credentials from:', this.tokenPath);
-      const credentials = await loadJsonFromStorage(this.tokenPath);
+      const credentials: any = await loadJsonFromStorage(this.tokenPath);
       console.log('Loaded credentials:', credentials ? '(exists)' : '(not found)');
       
       if (!credentials) {
@@ -68,7 +68,13 @@ export class GoogleAuth {
       }
 
       console.log('Loading OAuth2 keys from:', this.crendentialsPath);
-      const keys = await loadJsonFromStorage(this.crendentialsPath);
+      const keys: any = await loadJsonFromStorage(this.crendentialsPath);
+      
+      if (!keys) {
+        console.log('No OAuth2 keys found');
+        return null;
+      }
+      
       const key = keys.installed || keys.web;
       console.log('OAuth2 key loaded:', key ? '(exists)' : '(not found)');
 
@@ -132,12 +138,18 @@ export class GoogleAuth {
   async saveCredentials(client: OAuth2Client) {
     try {
       console.log('Saving credentials...');
-      const keys = await loadJsonFromStorage(this.crendentialsPath);
+      const keys: any = await loadJsonFromStorage(this.crendentialsPath);
+      
+      if (!keys) {
+        console.error('OAuth2 keys not found');
+        throw new Error('OAuth2 keys not found');
+      }
+      
       const key = keys.installed || keys.web;
       
       if (!client.credentials.refresh_token) {
         console.log('No refresh token in credentials, keeping existing one');
-        const existingCredentials = await loadJsonFromStorage(this.tokenPath);
+        const existingCredentials: any = await loadJsonFromStorage(this.tokenPath);
         if (existingCredentials?.refresh_token) {
           client.credentials.refresh_token = existingCredentials.refresh_token;
         }

@@ -6,8 +6,9 @@ const spreadsheetId = '13Y3q2mYpGRIIjD2oJZu5YvLIXkQB0jDaHDICNnLqLgE';
 const googleSheets = new GoogleSheets(spreadsheetId, {
   user: 'bigwhitekmc',
   type: 'oauth2',
-  scopeDir: '',
-  authDir: GOOGLE_AUTH_DIR,
+  sn: 1,
+  scopeDir: 'Apis/google/spec/',
+  authDir: 'Apis/google/',
 });
 
 const client = await googleSheets.init();
