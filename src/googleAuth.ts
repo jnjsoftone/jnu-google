@@ -1,7 +1,6 @@
 import { authenticate } from '@google-cloud/local-auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { createClient } from '@supabase/supabase-js';
 import { loadJsonFromGithub, saveJsonToGithub } from 'jnu-cloud';
 
 // github config (환경설정 macos: .zshrc / windows:  시스템 환경변수)
