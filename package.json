@@ -1,6 +1,6 @@
 {
   "name": "jnu-google",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Jnjsoft Nodejs Utility Library for Google(googleDrive, googleSheets, googleCalendar, ...) Support Functions in Typescript",
   "author": "JnJ One <jnjsoft.one@gmail.com>",
   "main": "./cjs/index.js",
