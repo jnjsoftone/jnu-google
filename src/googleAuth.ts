@@ -2,6 +2,9 @@ import { authenticate } from '@google-cloud/local-auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { loadJsonFromGithub, saveJsonToGithub } from 'jnu-cloud';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 // github config (환경설정 macos: .zshrc / windows:  시스템 환경변수)
 const { ENV_GITHUB_OWNER, ENV_GITHUB_REPO, ENV_GITHUB_TOKEN } = process.env;
@@ -183,16 +186,46 @@ export class GoogleAuth {
     }
 
     console.log('No valid credentials found, starting new authentication...');
-    // 새로운 인증 진행
-    client = await authenticate({
-      scopes: this.scopes,
-      keyfilePath: this.crendentialsPath,
-    });
-
-    if (client.credentials) {
-      console.log('New authentication successful, saving credentials...');
-      await this.saveCredentials(client);
+    
+    // GitHub에서 OAuth2 키 파일 가져오기
+    const keysContent = await loadJsonFromStorage(this.crendentialsPath);
+    
+    if (!keysContent) {
+      throw new Error('OAuth2 키 파일을 GitHub에서 찾을 수 없습니다: ' + this.crendentialsPath);
     }
-    return client;
+    
+    // 임시 디렉토리 및 파일 생성
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'google-auth-'));
+    const tempKeyFilePath = path.join(tempDir, 'oauth2-keys.json');
+    
+    try {
+      // 내용을 임시 파일에 저장
+      fs.writeFileSync(tempKeyFilePath, JSON.stringify(keysContent, null, 2));
+      console.log('OAuth2 키 파일을 임시 위치에 저장했습니다:', tempKeyFilePath);
+      
+      // 임시 파일 경로로 인증
+      client = await authenticate({
+        scopes: this.scopes,
+        keyfilePath: tempKeyFilePath,
+      });
+
+      if (client.credentials) {
+        console.log('New authentication successful, saving credentials...');
+        await this.saveCredentials(client);
+      }
+      
+      return client;
+    } finally {
+      // 인증 후 임시 파일 정리
+      try {
+        if (fs.existsSync(tempKeyFilePath)) {
+          fs.unlinkSync(tempKeyFilePath);
+        }
+        fs.rmdirSync(tempDir);
+        console.log('임시 파일 정리 완료');
+      } catch (cleanupError) {
+        console.warn('임시 파일 정리 중 오류 발생:', cleanupError);
+      }
+    }
   }
 }
