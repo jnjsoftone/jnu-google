@@ -28,21 +28,35 @@ const saveJsonToStorage = async (path: string, data: any) => {
 
 // getScopes를 비동기 함수로 수정
 const getScopes = async ({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}): Promise<string[]> => {
-  const scopes = scopeDir
+  let scopes = scopeDir
     ? await loadJsonFromStorage(`${scopeDir}scopes_${user}_${sn}.json`) ?? 
       await loadJsonFromStorage(`${scopeDir}scopes_default.json`)
     : [];
-  console.log('Loaded scopes:', scopes);
+
+  console.log('getScopes Loaded scopes1:', scopes);
+
+  // 스코프가 비어있거나 유효하지 않은 경우 기본값 사용
+  if (!scopes || !Array.isArray(scopes) || scopes.length === 0) {
+    console.log('Invalid or empty scopes detected, using default scopes');
+    scopes = [
+      'https://www.googleapis.com/auth/spreadsheets',
+      'https://www.googleapis.com/auth/drive.file'
+    ];
+  }
+  
+  console.log('Loaded scopes2:', scopes);
   return scopes as string[];
 };
 
 export class GoogleAuth {
   tokenPath: string = '';
   crendentialsPath: string = '';
+  scopeDir: string = '';
   scopes: string[];
 
   constructor({ user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = 'Apis/google/spec', authDir = 'Apis/google' } = {}) {
     console.log('Initializing GoogleAuth with:', { user, type, sn, scopeDir, authDir });
+    this.scopeDir = scopeDir;
     this.scopes = [];
     switch (type) {
       case 'oauth2':
@@ -53,8 +67,20 @@ export class GoogleAuth {
   }
 
   // 초기화를 위한 별도 메서드
-  async init({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}) {
-    this.scopes = await getScopes({ user, sn, scopeDir });
+  async init({ user = 'bigwhitekmc', sn = 0 } = {}) {
+    this.scopes = await getScopes({ user, sn, scopeDir: this.scopeDir });
+    console.log(`init SCOPES: ${this.scopes}`)
+
+    // 스코프가 비어있는지 확인하고 기본값 설정
+    if (!this.scopes || this.scopes.length === 0) {
+      console.log('Empty scopes after initialization, setting default scopes');
+      this.scopes = [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive.file'
+      ];
+    }
+    
+    console.log('Initialized scopes:', this.scopes);
     return this;
   }
 
@@ -193,6 +219,15 @@ export class GoogleAuth {
 
   async authorize() {
     console.log('Starting authorization process...');
+    
+    // 스코프가 비어있는지 확인
+    if (!this.scopes || this.scopes.length === 0) {
+      console.log('No scopes defined, initializing with default scopes');
+      await this.init();
+    }
+    
+    console.log('Using scopes:', this.scopes);
+    
     let client = await this.loadSavedCredentialsIfExist();
     
     if (client) {
@@ -230,6 +265,7 @@ export class GoogleAuth {
       console.log('OAuth2 키 파일을 임시 위치에 저장했습니다:', tempKeyFilePath);
       
       // 임시 파일 경로로 인증
+      console.log('Authenticating with scopes:', this.scopes);
       client = await authenticate({
         scopes: this.scopes,
         keyfilePath: tempKeyFilePath,

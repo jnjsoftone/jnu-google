@@ -2,6 +2,7 @@ import { OAuth2Client } from 'google-auth-library';
 export declare class GoogleAuth {
     tokenPath: string;
     crendentialsPath: string;
+    scopeDir: string;
     scopes: string[];
     constructor({ user, type, sn, scopeDir, authDir }?: {
         user?: string | undefined;
@@ -10,10 +11,9 @@ export declare class GoogleAuth {
         scopeDir?: string | undefined;
         authDir?: string | undefined;
     });
-    init({ user, sn, scopeDir }?: {
+    init({ user, sn }?: {
         user?: string | undefined;
         sn?: number | undefined;
-        scopeDir?: string | undefined;
     }): Promise<this>;
     loadSavedCredentialsIfExist(): Promise<OAuth2Client | null>;
     saveCredentials(client: OAuth2Client): Promise<void>;

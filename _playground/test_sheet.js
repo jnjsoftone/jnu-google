@@ -11,7 +11,7 @@ const googleSheets = new GoogleSheets(spreadsheetId, {
   authDir: 'Apis/google/',
 });
 
-const client = await googleSheets.init();
+const client = await googleSheets.init({ scopeDir: 'Apis/google/spec/' });
 const names = await googleSheets.getSheetNames();
 console.log(names);
 
