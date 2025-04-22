@@ -6,7 +6,7 @@ const spreadsheetId = '13Y3q2mYpGRIIjD2oJZu5YvLIXkQB0jDaHDICNnLqLgE';
 const googleSheets = new GoogleSheets(spreadsheetId, {
   user: 'bigwhitekmc',
   type: 'oauth2',
-  sn: 1,
+  sn: 0,
   scopeDir: 'Apis/google/spec/',
   authDir: 'Apis/google/',
 });

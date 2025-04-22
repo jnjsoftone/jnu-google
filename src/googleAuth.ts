@@ -121,8 +121,22 @@ export class GoogleAuth {
           client.setCredentials(newCredentials);
           await this.saveCredentials(client);
           console.log('Token refreshed successfully');
-        } catch (refreshError) {
+        } catch (refreshError: any) {
           console.error('Error refreshing token:', refreshError);
+          
+          // 갱신 실패 시 토큰 파일 삭제 (invalid_grant 오류 처리)
+          if (refreshError.message && typeof refreshError.message === 'string' && refreshError.message.includes('invalid_grant')) {
+            console.log('Invalid grant error detected. Removing token file and starting new authentication.');
+            // saveJsonToStorage를 사용해 null 값을 저장하거나 빈 파일로 저장
+            try {
+              await saveJsonToStorage(this.tokenPath, {});
+              console.log(`Token file cleared: ${this.tokenPath}`);
+            } catch (removeError) {
+              console.error('Failed to clear token file:', removeError);
+            }
+            return null;
+          }
+          
           if (!credentials.refresh_token) {
             console.log('No refresh token available, authentication required');
             return null;
@@ -182,10 +196,22 @@ export class GoogleAuth {
     let client = await this.loadSavedCredentialsIfExist();
     
     if (client) {
-      return client;
+      // 클라이언트 유효성 테스트 추가
+      try {
+        // 간단한 API 호출로 토큰이 실제로 유효한지 테스트
+        const tokenInfo = await client.getTokenInfo(
+          client.credentials.access_token || ''
+        );
+        console.log('Token is valid:', tokenInfo?.scopes);
+        return client;
+      } catch (error: any) {
+        console.error('Token validation failed:', error?.message || 'Unknown error');
+        console.log('Proceeding with new authentication...');
+        // 유효성 검사 실패 시 계속 진행하여 새 인증 시작
+      }
+    } else {
+      console.log('No valid credentials found, starting new authentication...');
     }
-
-    console.log('No valid credentials found, starting new authentication...');
     
     // GitHub에서 OAuth2 키 파일 가져오기
     const keysContent = await loadJsonFromStorage(this.crendentialsPath);
