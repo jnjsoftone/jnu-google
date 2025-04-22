@@ -5,13 +5,13 @@ const spreadsheetId = '13Y3q2mYpGRIIjD2oJZu5YvLIXkQB0jDaHDICNnLqLgE';
 // const googleSheets = new GoogleSheets(spreadsheetId, {user: 'bigwhitekmc', type: 'oauth2', scopeDir: GOOGLE_SCOPE_DIR, authDir: GOOGLE_AUTH_DIR});
 const googleSheets = new GoogleSheets(spreadsheetId, {
   user: 'bigwhitekmc',
-  type: 'oauth2',
-  sn: 0,
-  scopeDir: 'Apis/google/spec/',
-  authDir: 'Apis/google/',
+  // type: 'oauth2',
+  // sn: 0,
+  // scopeDir: 'Apis/google/spec/',
+  // authDir: 'Apis/google/',
 });
 
-const client = await googleSheets.init({ scopeDir: 'Apis/google/spec/' });
+const client = await googleSheets.init();
 const names = await googleSheets.getSheetNames();
 console.log(names);
 

@@ -174,7 +174,7 @@ export class GoogleSheets {
   // * CONSTRUCTOR
   /** GoogleAuth 참조(googleAuth.ts)
    */
-  constructor(spreadsheetId: string, {user = "bigwhitekmc", type = "oauth2", sn = 0, scopeDir = 'Apis/google/spec', authDir = 'Apis/google' }: { user?: string; type?: string; sn?: number; scopeDir?: string; authDir?: string }) {
+  constructor(spreadsheetId: string, {user = "bigwhitekmc", type = "oauth2", sn = 0, scopeDir = 'Apis/google/spec/', authDir = 'Apis/google/' }: { user?: string; type?: string; sn?: number; scopeDir?: string; authDir?: string }) {
     this.googleAuth = new GoogleAuth({user, type, sn, scopeDir, authDir});
     this.spreadsheetId = spreadsheetId;
   }
