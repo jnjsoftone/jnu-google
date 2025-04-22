@@ -2,36 +2,58 @@ import { authenticate } from '@google-cloud/local-auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { createClient } from '@supabase/supabase-js';
-import { loadJsonFromGithub, saveJsonToGithub } from 'jnu-cloud';
 
-// github config (환경설정 macos: .zshrc / windows:  시스템 환경변수)
-const { ENV_GITHUB_OWNER, ENV_GITHUB_REPO, ENV_GITHUB_TOKEN } = process.env;
-// const ENV_GITHUB_API_URL = 'https://api.github.com';
-
-const githubConfig = {
-  owner: ENV_GITHUB_OWNER || "",
-  repo: ENV_GITHUB_REPO || "",
-  token: ENV_GITHUB_TOKEN || "",
-};
+// Supabase 클라이언트 초기화
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+);
 
 // Storage에서 JSON 파일 읽기 함수
 const loadJsonFromStorage = async (path: string) => {
-  return loadJsonFromGithub(path, githubConfig)
+  try {
+    const { data, error } = await supabase.storage
+      .from('google-auth')
+      .download(path);
+    
+    if (error) {
+      console.error('Storage read error:', error);
+      return null;
+    }
+
+    const text = await data.text();
+    return JSON.parse(text);
+  } catch (err) {
+    console.error('Error loading from storage:', err);
+    return null;
+  }
 };
 
 // Storage에 JSON 파일 저장 함수
 const saveJsonToStorage = async (path: string, data: any) => {
-  saveJsonToGithub(path, data, githubConfig)
+  try {
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const { error } = await supabase.storage
+      .from('google-auth')
+      .upload(path, blob, { upsert: true });
+
+    if (error) {
+      throw error;
+    }
+  } catch (err) {
+    console.error('Error saving to storage:', err);
+    throw err;
+  }
 };
 
 // getScopes를 비동기 함수로 수정
-const getScopes = async ({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}): Promise<string[]> => {
+const getScopes = async ({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}) => {
   const scopes = scopeDir
     ? await loadJsonFromStorage(`${scopeDir}scopes_${user}_${sn}.json`) ?? 
       await loadJsonFromStorage(`${scopeDir}scopes_default.json`)
-    : [];
+    : {};
   console.log('Loaded scopes:', scopes);
-  return scopes as string[];
+  return scopes;
 };
 
 export class GoogleAuth {
@@ -39,7 +61,7 @@ export class GoogleAuth {
   crendentialsPath: string = '';
   scopes: string[];
 
-  constructor({ user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = 'Apis/google/spec', authDir = 'Apis/google' } = {}) {
+  constructor({ user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = '', authDir = '' } = {}) {
     console.log('Initializing GoogleAuth with:', { user, type, sn, scopeDir, authDir });
     this.scopes = [];
     switch (type) {

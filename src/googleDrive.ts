@@ -42,7 +42,7 @@ export class GoogleDrive {
   // * CONSTRUCTOR
   /** GoogleAuth 참조(googleAuth.ts)
    */
-  constructor({user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = '', authDir = ''} = {}) {
+  constructor({user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = 'Apis/google/spec', authDir = 'Apis/google'} = {}) {
     this.googleAuth = new GoogleAuth({user, type, sn, scopeDir, authDir});
   }
 

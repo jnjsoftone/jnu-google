@@ -174,7 +174,7 @@ export class GoogleSheets {
   // * CONSTRUCTOR
   /** GoogleAuth 참조(googleAuth.ts)
    */
-  constructor(spreadsheetId: string, {user = "bigwhitekmc", type = "oauth2", sn = 0, scopeDir = '', authDir = '' }: { user?: string; type?: string; sn?: number; scopeDir?: string; authDir?: string }) {
+  constructor(spreadsheetId: string, {user = "bigwhitekmc", type = "oauth2", sn = 0, scopeDir = 'Apis/google/spec', authDir = 'Apis/google' }: { user?: string; type?: string; sn?: number; scopeDir?: string; authDir?: string }) {
     this.googleAuth = new GoogleAuth({user, type, sn, scopeDir, authDir});
     this.spreadsheetId = spreadsheetId;
   }
@@ -482,7 +482,8 @@ export class GoogleSheets {
 // & Test AREA
 // &---------------------------------------------------------------------------
 // const spreadsheetId = "13Y3q2mYpGRIIjD2oJZu5YvLIXkQB0jDaHDICNnLqLgE";
-// const googleSheets = new GoogleSheets(spreadsheetId, {user: 'bigwhitekmc', type: 'oauth2', scopeDir: 'C:/JnJ-soft/Developments/_Settings/Apis/google/spec', authDir: 'C:/JnJ-soft/Developments/_Settings/Apis/google'});
+// // const googleSheets = new GoogleSheets(spreadsheetId, {user: 'bigwhitekmc', type: 'oauth2', scopeDir: 'C:/JnJ-soft/Developments/_Settings/Apis/google/spec', authDir: 'C:/JnJ-soft/Developments/_Settings/Apis/google'});
+// const googleSheets = new GoogleSheets(spreadsheetId, {user: 'bigwhitekmc', type: 'oauth2'});
 
 
 // (async ()=> {
