@@ -47,7 +47,7 @@ const saveJsonToStorage = async (path: string, data: any) => {
 };
 
 // getScopes를 비동기 함수로 수정
-const getScopes = async ({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}) => {
+const getScopes = async ({ user = 'bigwhitekmc', sn = 0, scopeDir = 'Apis/google/spec/' } = {}) => {
   const scopes = scopeDir
     ? await loadJsonFromStorage(`${scopeDir}scopes_${user}_${sn}.json`) ?? 
       await loadJsonFromStorage(`${scopeDir}scopes_default.json`)
@@ -61,7 +61,7 @@ export class GoogleAuth {
   crendentialsPath: string = '';
   scopes: string[];
 
-  constructor({ user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = '', authDir = '' } = {}) {
+  constructor({ user = 'bigwhitekmc', type = 'oauth2', sn = 0, scopeDir = 'Apis/google/spec/', authDir = 'Apis/google/' } = {}) {
     console.log('Initializing GoogleAuth with:', { user, type, sn, scopeDir, authDir });
     this.scopes = [];
     switch (type) {
@@ -73,7 +73,7 @@ export class GoogleAuth {
   }
 
   // 초기화를 위한 별도 메서드
-  async init({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}) {
+  async init({ user = 'bigwhitekmc', sn = 0, scopeDir = 'Apis/google/spec/' } = {}) {
     this.scopes = await getScopes({ user, sn, scopeDir });
     return this;
   }

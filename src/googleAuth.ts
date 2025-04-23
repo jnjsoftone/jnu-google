@@ -27,7 +27,7 @@ const saveJsonToStorage = async (path: string, data: any) => {
 };
 
 // getScopes를 비동기 함수로 수정
-const getScopes = async ({ user = 'bigwhitekmc', sn = 0, scopeDir = '' } = {}): Promise<string[]> => {
+const getScopes = async ({ user = 'bigwhitekmc', sn = 0, scopeDir = 'Apis/google/spec/' } = {}): Promise<string[]> => {
   let scopes = scopeDir
     ? await loadJsonFromStorage(`${scopeDir}scopes_${user}_${sn}.json`) ?? 
       await loadJsonFromStorage(`${scopeDir}scopes_default.json`)
