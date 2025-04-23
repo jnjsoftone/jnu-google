@@ -63,10 +63,11 @@ export class GoogleCalendar {
       console.log("No calendars found.");
       return;
     }
-    console.log("Calendars:");
-    calendars.forEach((calendar: any) => {
-      console.log(`${calendar.id} - ${calendar.summary}`);
-    });
+    // console.log("Calendars:");
+    // calendars.forEach((calendar: any) => {
+    //   console.log(`${calendar.id} - ${calendar.summary}`);
+    // });
+    return calendars
   };
 
   /** listEvents
@@ -85,11 +86,12 @@ export class GoogleCalendar {
       console.log("No upcoming events found.");
       return;
     }
-    console.log("Upcoming 10 events:");
-    events.map((event: any, i: number) => {
-      const start = event.start!.dateTime || event.start!.date;
-      console.log(`${start} - ${event.summary}`);
-    });
+    // console.log("Upcoming 10 events:");
+    // events.map((event: any, i: number) => {
+    //   const start = event.start!.dateTime || event.start!.date;
+    //   console.log(`${start} - ${event.summary}`);
+    // });
+    return events
   };
 
   /** createEvent
@@ -110,6 +112,7 @@ export class GoogleCalendar {
       requestBody: event,
     });
     console.log(`Event created: ${res.data.htmlLink}`);
+    return res
   };
 
   updateEvent = async (eventId: any, summary: any, startTime: any, endTime: any) => {
@@ -128,7 +131,8 @@ export class GoogleCalendar {
       eventId: eventId,
       requestBody: event,
     });
-    console.log(`Event updated: ${res.data.htmlLink}`);
+    // console.log(`Event updated: ${res.data.htmlLink}`);
+    return res
   };
 
   deleteEvent = async (eventId: any) => {

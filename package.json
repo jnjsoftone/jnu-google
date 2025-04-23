@@ -45,7 +45,7 @@
     "@supabase/supabase-js": "^2.48.1",
     "dotenv": "^16.4.7",
     "googleapis": "^144.0.0",
-    "jnu-abc": "^0.0.3",
+    "jnu-abc": "^0.0.17",
     "jnu-cloud": "^0.0.10"
   },
   "optionalDependencies": {
